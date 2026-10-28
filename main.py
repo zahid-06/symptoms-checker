@@ -18,7 +18,7 @@ artifacts: Dict[str, Any] = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load the trained model once, when the server starts
+
     try:
         artifacts.update(joblib.load("disease_model.pkl"))
         print("Model loaded.")
@@ -72,7 +72,7 @@ def predict(data: SymptomInput):
     if unknown:
         raise HTTPException(status_code=400, detail=f"Unknown symptoms: {unknown}")
 
-    # One column per symptom: 1 if the user selected it, otherwise 0
+  
     row = [[1 if s in chosen else 0 for s in symptoms]]
     X = pd.DataFrame(row, columns=symptoms)
 
