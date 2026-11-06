@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Dict, List
 
 import joblib
@@ -7,6 +8,9 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+
+HERE = Path(__file__).resolve().parent
+MODEL_PATH = HERE.parent / "models" / "disease_model.pkl"
 
 DISCLAIMER = (
     "Educational project using a public dataset. This is not medical advice "
@@ -18,12 +22,12 @@ artifacts: Dict[str, Any] = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
+    
     try:
-        artifacts.update(joblib.load("disease_model.pkl"))
+        artifacts.update(joblib.load(MODEL_PATH))
         print("Model loaded.")
     except Exception as e:
-        raise RuntimeError(f"Could not load model (run train_model.py first): {e}")
+        raise RuntimeError(f"Could not load model (run src/train_model.py first): {e}")
     yield
     artifacts.clear()
 
@@ -31,7 +35,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Symptom Checker API",
     description="Suggests likely diseases from selected symptoms. " + DISCLAIMER,
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -50,12 +54,13 @@ class Prediction(BaseModel):
 class PredictResponse(BaseModel):
     predictions: List[Prediction]
     severity_score: int
+    max_severity: int
     disclaimer: str
 
 
 @app.get("/", include_in_schema=False)
 def home():
-    return FileResponse("index.html")
+    return FileResponse(HERE / "index.html")
 
 
 @app.get("/symptoms")
@@ -72,9 +77,8 @@ def predict(data: SymptomInput):
     if unknown:
         raise HTTPException(status_code=400, detail=f"Unknown symptoms: {unknown}")
 
-  
-    row = [[1 if s in chosen else 0 for s in symptoms]]
-    X = pd.DataFrame(row, columns=symptoms)
+    
+    X = pd.DataFrame([[1 if s in chosen else 0 for s in symptoms]], columns=symptoms)
 
     model = artifacts["model"]
     probabilities = model.predict_proba(X)[0]
@@ -89,18 +93,16 @@ def predict(data: SymptomInput):
             Prediction(
                 disease=disease,
                 probability=round(float(probabilities[i]), 3),
-                description=artifacts["descriptions"].get(
-                    disease, "No description available."
-                ),
+                description=artifacts["descriptions"].get(disease, "No description available."),
                 precautions=artifacts["precautions"].get(disease, []),
             )
         )
 
-    severity_score = sum(artifacts["severity"].get(s, 0) for s in chosen)
-
+    weights = artifacts["severity"]
     return PredictResponse(
         predictions=predictions,
-        severity_score=severity_score,
+        severity_score=sum(weights.get(s, 0) for s in chosen),
+        max_severity=len(chosen) * max(weights.values()),
         disclaimer=DISCLAIMER,
     )
 
