@@ -5,171 +5,192 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Symptom Checker</title>
 <style>
-  body { font-family: Arial, sans-serif; max-width: 560px; margin: 24px auto; padding: 0 16px; color: #111; }
-  h1 { font-size: 22px; margin-bottom: 4px; }
-  p.sub { color: #555; margin-top: 0; }
-  input[type=text] { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #999; border-radius: 4px; box-sizing: border-box; }
-  #list { height: 240px; overflow-y: auto; border: 1px solid #999; border-radius: 4px; margin-top: 8px; padding: 6px; }
-  .item { display: block; padding: 8px 4px; font-size: 15px; cursor: pointer; border-bottom: 1px solid #eee; }
-  .item input { margin-right: 8px; transform: scale(1.2); }
-  #chosen { margin-top: 10px; font-size: 14px; min-height: 20px; }
-  .chip { display: inline-block; background: #111; color: #fff; padding: 4px 10px; border-radius: 14px; margin: 3px 4px 3px 0; font-size: 13px; }
-  button { margin-top: 14px; width: 100%; padding: 12px; font-size: 16px; background: #111; color: #fff; border: 0; border-radius: 4px; cursor: pointer; }
-  button.secondary { background: #fff; color: #111; border: 1px solid #111; margin-top: 8px; }
-  #error { margin-top: 14px; color: #b00020; display: none; }
-  .card { margin-top: 18px; padding: 14px; border: 2px solid #111; border-radius: 4px; }
-  .card h2 { margin: 0 0 4px 0; font-size: 18px; }
-  .prob { font-size: 14px; color: #444; margin-bottom: 8px; }
-  .card ul { margin: 6px 0 0 18px; padding: 0; }
-  #severity { margin-top: 18px; font-size: 14px; }
-  .note { margin-top: 28px; font-size: 12px; color: #555; border-top: 1px solid #ccc; padding-top: 10px; }
+:root{--ink:#12313a;--mute:#5b747b;--paper:#f3f8f9;--card:#fff;--line:#d3e0e4;--teal:#0e7c86;--tint:#e1f0f2;--coral:#c8452d;--r:10px}
+@media (prefers-color-scheme:dark){:root{--ink:#e4f1f3;--mute:#92aeb5;--paper:#0d1d22;--card:#14292f;--line:#274249;--teal:#3cc0cc;--tint:#193940;--coral:#ff8a70}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 18px 40px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;border-bottom:3px solid var(--teal);padding-bottom:14px}
+h1{margin:0;font-size:clamp(28px,5vw,44px);line-height:1.05;letter-spacing:-.03em;font-weight:800}
+header p{margin:0;max-width:34ch;color:var(--mute);font-size:15px}
+.grid{display:grid;grid-template-columns:1.15fr 1fr;gap:22px;margin-top:22px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+h2{margin:0 0 10px;font-size:19px;letter-spacing:-.01em}
+.search{width:100%;padding:12px 14px;font:inherit;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r)}
+.search:focus,.chip:focus-visible,.btn:focus-visible,summary:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.quick{margin:12px 0 4px;font-size:14px;color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+#list{max-height:300px;overflow-y:auto;padding:2px;margin-top:6px}
+.chip{font:inherit;font-size:14px;padding:6px 12px;border-radius:99px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;text-transform:capitalize;transition:background .15s,border-color .15s}
+.chip:hover{border-color:var(--teal)}
+.chip[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff}
+@media (prefers-color-scheme:dark){.chip[aria-pressed=true]{color:#06161a}}
+.tray{margin-top:14px;padding:12px;border-radius:var(--r);background:var(--tint);min-height:56px}
+.tray b{font-size:14px}
+.meter{height:6px;border-radius:9px;background:var(--line);margin:8px 0 10px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--teal);transition:width .25s}
+.actions{display:flex;gap:10px;margin-top:14px}
+.btn{font:inherit;font-weight:700;padding:12px 18px;border-radius:var(--r);border:1.5px solid var(--teal);cursor:pointer}
+.btn.main{flex:1;background:var(--teal);color:#fff}
+.btn.alt{background:transparent;color:var(--teal)}
+@media (prefers-color-scheme:dark){.btn.main{color:#06161a}}
+.btn:disabled{opacity:.5;cursor:wait}
+#report{position:sticky;top:14px}
+.empty{color:var(--mute);font-size:15px}
+.err{color:var(--coral);font-weight:600;margin:10px 0 0}
+.sev{display:flex;justify-content:space-between;font-size:14px;color:var(--mute);margin-bottom:4px}
+.sev b{color:var(--ink)}
+.hit{border-top:1px solid var(--line);padding:14px 0 6px}
+.hit:first-of-type{border-top:0}
+.hit header{border:0;padding:0;align-items:baseline;flex-wrap:nowrap}
+.hit h3{margin:0;font-size:17px}
+.pct{font-weight:800;font-size:22px;color:var(--teal);font-variant-numeric:tabular-nums}
+.hit:not(:first-of-type) .pct{font-size:18px;color:var(--mute)}
+.range{height:12px;margin:8px 0;border-radius:4px;border:1px solid var(--line);background:repeating-linear-gradient(90deg,transparent 0 calc(25% - 1px),var(--line) calc(25% - 1px) 25%)}
+.range i{display:block;height:100%;width:0;background:var(--teal);border-radius:3px;transition:width .6s ease}
+.hit:not(:first-of-type) .range i{background:var(--mute)}
+.hit p{margin:6px 0;font-size:14.5px;color:var(--mute)}
+summary{cursor:pointer;font-weight:600;font-size:14.5px;padding:4px 0;color:var(--teal)}
+.hit ul{margin:4px 0 8px 20px;padding:0;font-size:14.5px}
+.note{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{#picker,.actions,.err{display:none}.grid{display:block}.panel{border:0}#report{position:static}body{background:#fff;color:#000}}
 </style>
 </head>
 <body>
+<div class="wrap">
+<header>
+  <h1>Symptom Checker</h1>
+  <p>Choose the symptoms you have and see which conditions match best.</p>
+</header>
 
-<h1>Symptom Checker</h1>
-<p class="sub">Select the symptoms you have (at least 2, ideally 3 or more), then press Check.</p>
+<div class="grid">
+  <section class="panel" id="picker" aria-label="Symptom picker">
+    <h2>Your symptoms</h2>
+    <input class="search" id="search" type="search" placeholder="Search, for example fever or rash" aria-label="Search symptoms" autocomplete="off">
+    <div class="quick" id="quickLabel">Common symptoms</div>
+    <div class="chips" id="quick"></div>
+    <div id="list" class="chips" aria-live="polite">Loading symptoms...</div>
+    <div class="tray">
+      <b id="count">0 selected</b>
+      <div class="meter"><i id="bar"></i></div>
+      <div class="chips" id="tray"></div>
+    </div>
+    <div class="actions">
+      <button class="btn main" id="go">Check symptoms</button>
+      <button class="btn alt" id="clear">Clear all</button>
+    </div>
+    <p class="err" id="err" role="alert" hidden></p>
+  </section>
 
-<input id="search" type="text" placeholder="Search symptoms, e.g. fever">
-<div id="list">Loading symptoms...</div>
-<div id="chosen"></div>
+  <section class="panel" id="report" aria-label="Results" aria-live="polite">
+    <h2>Results</h2>
+    <div id="out"><p class="empty">Select at least 2 symptoms, then press Check symptoms. Your top 3 matches appear here.</p></div>
+    <div class="actions" id="printRow" hidden><button class="btn alt" onclick="window.print()">Print result</button></div>
+  </section>
+</div>
 
-<button onclick="predict()">Check</button>
-<button class="secondary" onclick="clearAll()">Clear all</button>
-
-<div id="error"></div>
-<div id="severity"></div>
-<div id="results"></div>
-
-<p class="note" id="disclaimer">
-  Educational project using a public dataset. This is not medical advice and
-  cannot diagnose any condition. Please consult a doctor.
-</p>
+<p class="note">Educational project built on a public dataset. It is not medical advice and cannot diagnose any condition. If you feel unwell, see a doctor.</p>
+</div>
 
 <script>
-let allSymptoms = [];
-const selected = new Set();
+const QUICK=["fever","high_fever","cough","headache","fatigue","vomiting","nausea","chills","abdominal_pain","skin_rash"];
+let all=[];const sel=new Set();
+const $=id=>document.getElementById(id);
+const pretty=s=>s.replace(/_/g," ");
 
-function pretty(name) { return name.replace(/_/g, " "); }
+function chip(s){
+  const b=document.createElement("button");
+  b.type="button";b.className="chip";b.dataset.s=s;b.textContent=pretty(s);
+  b.setAttribute("aria-pressed",sel.has(s));
+  b.onclick=()=>toggle(s);
+  return b;
+}
+function toggle(s){
+  sel.has(s)?sel.delete(s):sel.add(s);
+  document.querySelectorAll('[data-s="'+s+'"]').forEach(el=>el.setAttribute("aria-pressed",sel.has(s)));
+  tray();
+}
+function tray(){
+  const t=$("tray");t.innerHTML="";
+  sel.forEach(s=>t.appendChild(chip(s)));
+  const n=sel.size;
+  $("count").textContent=n===0?"0 selected":n+" selected"+(n<2?" (add at least 2)":"");
+  $("bar").style.width=Math.min(100,n/3*100)+"%";
+}
+function list(){
+  const q=$("search").value.toLowerCase().trim(),box=$("list");
+  box.innerHTML="";
+  const hits=all.filter(s=>pretty(s).includes(q));
+  if(!hits.length){box.textContent="No symptom matches that search. Try a shorter word.";return}
+  hits.forEach(s=>box.appendChild(chip(s)));
+}
+function fail(m){const e=$("err");e.textContent=m;e.hidden=false}
+function el(tag,cls,txt){const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x}
 
-async function load() {
-  try {
-    const res = await fetch("/symptoms");
-    const data = await res.json();
-    allSymptoms = data.symptoms;
-    render();
-  } catch (e) {
-    document.getElementById("list").textContent = "Could not load symptoms. Is the server running?";
-  }
+async function load(){
+  try{
+    const r=await fetch("/symptoms");all=(await r.json()).symptoms;
+    const q=QUICK.filter(s=>all.includes(s));
+    q.forEach(s=>$("quick").appendChild(chip(s)));
+    if(!q.length)$("quickLabel").hidden=true;
+    list();tray();
+  }catch(e){$("list").textContent="Could not load symptoms. Check that the server is running."}
 }
 
-function render() {
-  const query = document.getElementById("search").value.toLowerCase().trim();
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-  allSymptoms
-    .filter(s => pretty(s).includes(query))
-    .forEach(s => {
-      const label = document.createElement("label");
-      label.className = "item";
-      const box = document.createElement("input");
-      box.type = "checkbox";
-      box.checked = selected.has(s);
-      box.onchange = () => {
-        if (box.checked) selected.add(s); else selected.delete(s);
-        renderChosen();
-      };
-      label.appendChild(box);
-      label.appendChild(document.createTextNode(pretty(s)));
-      list.appendChild(label);
-    });
-  renderChosen();
+async function check(){
+  $("err").hidden=true;
+  if(sel.size<2){fail("Select at least 2 symptoms to check.");return}
+  const btn=$("go");btn.disabled=true;btn.textContent="Checking...";
+  try{
+    const r=await fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({symptoms:[...sel]})});
+    if(!r.ok){fail("The server could not process this request. Try again in a moment.");return}
+    show(await r.json());
+  }catch(e){fail("Could not reach the server. Check your connection and try again.")}
+  finally{btn.disabled=false;btn.textContent="Check symptoms"}
 }
 
-function renderChosen() {
-  const box = document.getElementById("chosen");
-  box.innerHTML = "";
-  if (selected.size === 0) { box.textContent = "No symptoms selected yet."; return; }
-  selected.forEach(s => {
-    const chip = document.createElement("span");
-    chip.className = "chip";
-    chip.textContent = pretty(s);
-    box.appendChild(chip);
+function show(d){
+  const out=$("out");out.innerHTML="";
+  const sv=el("div");
+  const row=el("div","sev");
+  const a=el("span");a.append("Severity score ");a.appendChild(el("b",null,d.severity_score+" of "+d.max_severity));
+  row.appendChild(a);row.appendChild(el("span",null,"sum of symptom weights"));
+  const m=el("div","meter");const mi=el("i");m.appendChild(mi);
+  sv.append(row,m);out.appendChild(sv);
+  setTimeout(()=>mi.style.width=Math.round(d.severity_score/d.max_severity*100)+"%",30);
+
+  const bars=[];
+  d.predictions.forEach((p,i)=>{
+    const art=el("article","hit");
+    const h=el("header");h.appendChild(el("h3",null,(i+1)+". "+p.disease));
+    const pc=Math.round(p.probability*100);
+    h.appendChild(el("span","pct",pc+"%"));
+    art.appendChild(h);
+    const rg=el("div","range");rg.setAttribute("role","img");rg.setAttribute("aria-label","Match "+pc+" percent");
+    const ri=el("i");rg.appendChild(ri);bars.push([ri,pc]);art.appendChild(rg);
+    art.appendChild(el("p",null,p.description));
+    if(p.precautions.length){
+      const dt=el("details");dt.appendChild(el("summary",null,"Suggested precautions"));
+      const ul=el("ul");p.precautions.forEach(t=>ul.appendChild(el("li",null,t)));
+      dt.appendChild(ul);art.appendChild(dt);
+    }
+    out.appendChild(art);
   });
+  setTimeout(()=>bars.forEach(([x,v])=>x.style.width=v+"%"),30);
+  out.appendChild(el("p","note",d.disclaimer));
+  $("printRow").hidden=false;
+  if(matchMedia("(max-width:820px)").matches)$("report").scrollIntoView({behavior:"smooth"});
 }
 
-function clearAll() {
-  selected.clear();
-  document.getElementById("results").innerHTML = "";
-  document.getElementById("severity").textContent = "";
-  document.getElementById("error").style.display = "none";
-  render();
-}
-
-function showError(msg) {
-  const e = document.getElementById("error");
-  e.textContent = msg;
-  e.style.display = "block";
-}
-
-async function predict() {
-  document.getElementById("error").style.display = "none";
-  document.getElementById("results").innerHTML = "";
-  document.getElementById("severity").textContent = "";
-
-  if (selected.size < 2) { showError("Please select at least 2 symptoms."); return; }
-
-  try {
-    const res = await fetch("/predict", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ symptoms: Array.from(selected) })
-    });
-    if (!res.ok) { showError("Something went wrong. Please try again."); return; }
-    const data = await res.json();
-
-    document.getElementById("severity").textContent =
-      "Symptom severity score: " + data.severity_score +
-      " (the sum of severity weights; higher means more severe symptoms).";
-
-    const results = document.getElementById("results");
-    data.predictions.forEach((p, i) => {
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const title = document.createElement("h2");
-      title.textContent = (i + 1) + ". " + p.disease;
-      card.appendChild(title);
-
-      const prob = document.createElement("div");
-      prob.className = "prob";
-      prob.textContent = "Match: " + Math.round(p.probability * 100) + "%";
-      card.appendChild(prob);
-
-      const desc = document.createElement("p");
-      desc.textContent = p.description;
-      card.appendChild(desc);
-
-      if (p.precautions.length) {
-        const head = document.createElement("strong");
-        head.textContent = "Suggested precautions:";
-        card.appendChild(head);
-        const ul = document.createElement("ul");
-        p.precautions.forEach(t => {
-          const li = document.createElement("li");
-          li.textContent = t;
-          ul.appendChild(li);
-        });
-        card.appendChild(ul);
-      }
-      results.appendChild(card);
-    });
-  } catch (e) {
-    showError("Could not reach the server. Is it running?");
-  }
-}
-
-document.getElementById("search").addEventListener("input", render);
+$("search").addEventListener("input",list);
+$("go").onclick=check;
+$("clear").onclick=()=>{
+  sel.clear();document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed","false"));
+  tray();$("err").hidden=true;$("printRow").hidden=true;
+  $("out").innerHTML='<p class="empty">Select at least 2 symptoms, then press Check symptoms. Your top 3 matches appear here.</p>';
+};
 load();
 </script>
 </body>
